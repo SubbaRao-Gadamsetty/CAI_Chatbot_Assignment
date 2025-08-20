@@ -1,2 +1,5 @@
 master_prompt.txt
 *.pyc
+__pycache__/
+*.pyo
+*.pyd
