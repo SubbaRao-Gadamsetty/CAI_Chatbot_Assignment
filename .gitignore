@@ -1,4 +1,7 @@
 master_prompt.txt
+rag_system_prompt.txt
+finetune_prompt.txt
+evaluation_prompt.txt
 *.pyc
 __pycache__/
 *.pyo

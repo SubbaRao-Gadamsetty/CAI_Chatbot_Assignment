@@ -1,0 +1,434 @@
+[
+    {
+        "Q": "What were Amazon’s consolidated net sales in 2024?",
+        "A": "$637,959 million ($637.959 billion)"
+    },
+    {
+        "Q": "What were Amazon’s consolidated net sales in 2023?",
+        "A": "$574,785 million ($574.785 billion)"
+    },
+    {
+        "Q": "What was Amazon’s net income in 2024?",
+        "A": "$59,248 million ($59.248 billion)"
+    },
+    {
+        "Q": "What was Amazon’s net income in 2023?",
+        "A": "$30,425 million ($30.425 billion)"
+    },
+    {
+        "Q": "What was Amazon’s operating income in 2024?",
+        "A": "$68,593 million ($68.593 billion)"
+    },
+    {
+        "Q": "What was Amazon’s operating income in 2023?",
+        "A": "$36,852 million ($36.852 billion)"
+    },
+    {
+        "Q": "What were total operating expenses in 2024?",
+        "A": "$569,366 million ($569.366 billion)"
+    },
+    {
+        "Q": "What were total operating expenses in 2023?",
+        "A": "$537,933 million ($537.933 billion)"
+    },
+    {
+        "Q": "How much was cost of sales in 2024?",
+        "A": "$395,533 million ($395.533 billion)"
+    },
+    {
+        "Q": "How much was cost of sales in 2023?",
+        "A": "$393,467 million ($393.467 billion)"
+    },
+    {
+        "Q": "What were fulfillment expenses in 2024?",
+        "A": "$96,638 million ($96.638 billion)"
+    },
+    {
+        "Q": "What were fulfillment expenses in 2023?",
+        "A": "$90,932 million ($90.932 billion)"
+    },
+    {
+        "Q": "What were technology and content expenses in 2024?",
+        "A": "$88,344 million ($88.344 billion)"
+    },
+    {
+        "Q": "What were technology and content expenses in 2023?",
+        "A": "$84,918 million ($84.918 billion)"
+    },
+    {
+        "Q": "What were sales and marketing expenses in 2024?",
+        "A": "$32,297 million ($32.297 billion)"
+    },
+    {
+        "Q": "What were sales and marketing expenses in 2023?",
+        "A": "$30,263 million ($30.263 billion)"
+    },
+    {
+        "Q": "What were general and administrative expenses in 2024?",
+        "A": "$14,168 million ($14.168 billion)"
+    },
+    {
+        "Q": "What were general and administrative expenses in 2023?",
+        "A": "$12,345 million ($12.345 billion)"
+    },
+    {
+        "Q": "What was “Other operating expense (income), net” in 2024?",
+        "A": "$(386) million (net income)"
+    },
+    {
+        "Q": "What was “Other operating expense (income), net” in 2023?",
+        "A": "$8 million"
+    },
+    {
+        "Q": "What was total non-operating income (expense) in 2024?",
+        "A": "$21 million (income)"
+    },
+    {
+        "Q": "What was total non-operating income (expense) in 2023?",
+        "A": "$(705) million (expense)"
+    },
+    {
+        "Q": "What was the provision for income taxes in 2024?",
+        "A": "$(9,265) million"
+    },
+    {
+        "Q": "What was the provision for income taxes in 2023?",
+        "A": "$(1,374) million"
+    },
+    {
+        "Q": "What was equity-method investment activity (net of tax) in 2024?",
+        "A": "$(101) million"
+    },
+    {
+        "Q": "What was basic EPS in 2024?",
+        "A": "$5.66"
+    },
+    {
+        "Q": "What was diluted EPS in 2024?",
+        "A": "$5.53"
+    },
+    {
+        "Q": "What was basic EPS in 2023?",
+        "A": "$3.02"
+    },
+    {
+        "Q": "What was diluted EPS in 2023?",
+        "A": "$2.97"
+    },
+    {
+        "Q": "What were weighted-average shares outstanding (basic) in 2024?",
+        "A": "10,473 million"
+    },
+    {
+        "Q": "What were weighted-average shares outstanding (diluted) in 2024?",
+        "A": "10,713 million"
+    },
+    {
+        "Q": "What were weighted-average shares outstanding (basic) in 2023?",
+        "A": "10,065 million"
+    },
+    {
+        "Q": "What were weighted-average shares outstanding (diluted) in 2023?",
+        "A": "10,235 million"
+    },
+    {
+        "Q": "What were North America segment net sales in 2024?",
+        "A": "$387,497 million ($387.497 billion)"
+    },
+    {
+        "Q": "What were North America segment net sales in 2023?",
+        "A": "$352,828 million ($352.828 billion)"
+    },
+    {
+        "Q": "What were International segment net sales in 2024?",
+        "A": "$142,906 million ($142.906 billion)"
+    },
+    {
+        "Q": "What were International segment net sales in 2023?",
+        "A": "$131,200 million ($131.200 billion)"
+    },
+    {
+        "Q": "What were AWS segment net sales in 2024?",
+        "A": "$107,556 million ($107.556 billion)"
+    },
+    {
+        "Q": "What were AWS segment net sales in 2023?",
+        "A": "$90,757 million ($90.757 billion)"
+    },
+    {
+        "Q": "What was North America segment operating income in 2024?",
+        "A": "$24,967 million ($24.967 billion)"
+    },
+    {
+        "Q": "What was North America segment operating income in 2023?",
+        "A": "$14,877 million ($14.877 billion)"
+    },
+    {
+        "Q": "What was International segment operating income (loss) in 2024?",
+        "A": "$3,792 million ($3.792 billion)"
+    },
+    {
+        "Q": "What was International segment operating income (loss) in 2023?",
+        "A": "$(2,656) million"
+    },
+    {
+        "Q": "What was AWS segment operating income in 2024?",
+        "A": "$39,834 million ($39.834 billion)"
+    },
+    {
+        "Q": "What was AWS segment operating income in 2023?",
+        "A": "$24,631 million ($24.631 billion)"
+    },
+    {
+        "Q": "How much were “Online stores” net sales in 2024?",
+        "A": "$247,029 million ($247.029 billion)"
+    },
+    {
+        "Q": "How much were “Online stores” net sales in 2023?",
+        "A": "$231,872 million ($231.872 billion)"
+    },
+    {
+        "Q": "How much were “Physical stores” net sales in 2024?",
+        "A": "$21,215 million ($21.215 billion)"
+    },
+    {
+        "Q": "How much were “Physical stores” net sales in 2023?",
+        "A": "$20,030 million ($20.030 billion)"
+    },
+    {
+        "Q": "How much were “Third-party seller services” net sales in 2024?",
+        "A": "$156,146 million ($156.146 billion)"
+    },
+    {
+        "Q": "How much were “Third-party seller services” net sales in 2023?",
+        "A": "$140,053 million ($140.053 billion)"
+    },
+    {
+        "Q": "How much were “Subscription services” net sales in 2024?",
+        "A": "$44,374 million ($44.374 billion)"
+    },
+    {
+        "Q": "How much were “Subscription services” net sales in 2023?",
+        "A": "$40,209 million ($40.209 billion)"
+    },
+    {
+        "Q": "How much were “Advertising services” net sales in 2024?",
+        "A": "$56,214 million ($56.214 billion)"
+    },
+    {
+        "Q": "How much were “Advertising services” net sales in 2023?",
+        "A": "$46,906 million ($46.906 billion)"
+    },
+    {
+        "Q": "How much were “Other” net sales in 2024?",
+        "A": "$5,425 million ($5.425 billion)"
+    },
+    {
+        "Q": "How much were “Other” net sales in 2023?",
+        "A": "$4,958 million ($4.958 billion)"
+    },
+    {
+        "Q": "What was the 2024 net sales mix by segment?",
+        "A": "North America 61%, International 22%, AWS 17%"
+    },
+    {
+        "Q": "What were the 2024 year-over-year growth rates by segment?",
+        "A": "North America +10%; International +9% (+10% ex-FX); AWS +19%"
+    },
+    {
+        "Q": "What were U.S. net sales in 2024?",
+        "A": "$438,015 million ($438.015 billion)"
+    },
+    {
+        "Q": "What were U.S. net sales in 2023?",
+        "A": "$381,831 million ($381.831 billion)"
+    },
+    {
+        "Q": "What were Germany net sales in 2024?",
+        "A": "$38,332 million ($38.332 billion)"
+    },
+    {
+        "Q": "What were U.K. net sales in 2024?",
+        "A": "$33,815 million ($33.815 billion)"
+    },
+    {
+        "Q": "What were Japan net sales in 2024?",
+        "A": "$26,772 million ($26.772 billion)"
+    },
+    {
+        "Q": "What were “Rest of world” net sales in 2024?",
+        "A": "$101,025 million ($101.025 billion)"
+    },
+    {
+        "Q": "What were shipping costs in 2024?",
+        "A": "$95.8 billion"
+    },
+    {
+        "Q": "What were shipping costs in 2023?",
+        "A": "$89.5 billion"
+    },
+    {
+        "Q": "How did foreign exchange affect 2024 net sales and operating income?",
+        "A": "FX reduced net sales by $2.335 billion and operating income by $131 million (net), with operating expenses reduced by $2.466 billion"
+    },
+    {
+        "Q": "What were cash and cash equivalents at December 31, 2024?",
+        "A": "$73,513 million"
+    },
+    {
+        "Q": "What were marketable securities at December 31, 2024?",
+        "A": "$52,265 million"
+    },
+    {
+        "Q": "What were inventories at December 31, 2024?",
+        "A": "$38,085 million"
+    },
+    {
+        "Q": "What were accounts receivable, net, at December 31, 2024?",
+        "A": "$56,994 million"
+    },
+    {
+        "Q": "What was property and equipment, net, at December 31, 2024?",
+        "A": "$252,665 million ($252.665 billion)"
+    },
+    {
+        "Q": "What was goodwill at December 31, 2024?",
+        "A": "$18,011 million"
+    },
+    {
+        "Q": "What were total assets at December 31, 2024?",
+        "A": "$624,894 million ($624.894 billion)"
+    },
+    {
+        "Q": "What were accounts payable at December 31, 2024?",
+        "A": "$88,391 million"
+    },
+    {
+        "Q": "What were accrued expenses and other at December 31, 2024?",
+        "A": "$72,123 million"
+    },
+    {
+        "Q": "What was unearned revenue at December 31, 2024?",
+        "A": "$17,885 million"
+    },
+    {
+        "Q": "What was long-term debt at December 31, 2024?",
+        "A": "$52,571 million"
+    },
+    {
+        "Q": "What were long-term operating lease liabilities at December 31, 2024?",
+        "A": "$78,266 million"
+    },
+    {
+        "Q": "What was total stockholders’ equity at December 31, 2024?",
+        "A": "$201,094 million ($201.094 billion)"
+    },
+    {
+        "Q": "What were cash, cash equivalents, and restricted cash at year-end 2024?",
+        "A": "$82,312 million"
+    },
+    {
+        "Q": "What were cash, cash equivalents, and restricted cash at year-end 2023?",
+        "A": "$73,683 million"
+    },
+    {
+        "Q": "What were net cash provided by operating activities in 2024?",
+        "A": "$115,877 million ($115.877 billion)"
+    },
+    {
+        "Q": "What were net cash provided by operating activities in 2023?",
+        "A": "$84,946 million ($84.946 billion)"
+    },
+    {
+        "Q": "What were net cash used in investing activities in 2024?",
+        "A": "$(94,342) million"
+    },
+    {
+        "Q": "What were net cash used in investing activities in 2023?",
+        "A": "$(48,997) million"
+    },
+    {
+        "Q": "What were net cash used in financing activities in 2024?",
+        "A": "$(6,895) million"
+    },
+    {
+        "Q": "What were net cash used in financing activities in 2023?",
+        "A": "$(3,390) million"
+    },
+    {
+        "Q": "What was free cash flow in 2024?",
+        "A": "$38,219 million ($38.219 billion)"
+    },
+    {
+        "Q": "What was “free cash flow less equipment finance leases and principal repayments of all other finance leases and financing obligations” in 2024?",
+        "A": "$36,211 million"
+    },
+    {
+        "Q": "How much did purchases of property and equipment (net of proceeds and incentives) total in 2024?",
+        "A": "$77,658 million"
+    },
+    {
+        "Q": "How much did purchases of property and equipment (net of proceeds and incentives) total in 2023?",
+        "A": "$48,427 million"
+    },
+    {
+        "Q": "How much equipment was acquired under finance leases in 2024?",
+        "A": "$572 million"
+    },
+    {
+        "Q": "How much equipment was acquired under finance leases in 2023?",
+        "A": "$271 million"
+    },
+    {
+        "Q": "What were principal repayments of all other finance leases in 2024?",
+        "A": "$767 million"
+    },
+    {
+        "Q": "What were principal repayments of all other finance leases in 2023?",
+        "A": "$676 million"
+    },
+    {
+        "Q": "What were proceeds from property and equipment included in purchases in 2024?",
+        "A": "$2,760 million"
+    },
+    {
+        "Q": "What were proceeds from property and equipment included in purchases in 2023?",
+        "A": "$4,727 million"
+    },
+    {
+        "Q": "How much cash was paid for interest on debt in 2024?",
+        "A": "$1,858 million"
+    },
+    {
+        "Q": "How much cash was paid for interest on debt in 2023?",
+        "A": "$2,608 million"
+    },
+    {
+        "Q": "How much cash was paid for operating leases in 2024?",
+        "A": "$12,341 million"
+    },
+    {
+        "Q": "What were advertising and other promotional costs in 2024?",
+        "A": "$21,442 million"
+    },
+    {
+        "Q": "What were advertising and other promotional costs in 2023?",
+        "A": "$20,319 million"
+    },
+    {
+        "Q": "What were total cash, cash equivalents, and marketable securities at year-end 2024 vs. 2023?",
+        "A": "$125,778 million (2024) vs. $123,473 million (2023)"
+    },
+    {
+        "Q": "How many common shares were outstanding at December 31, 2024?",
+        "A": "10,667 million shares (par value $0.01)"
+    },
+    {
+        "Q": "What was the long-term debt balance at December 31, 2023 (for comparison)?",
+        "A": "$58,262 million"
+    },
+    {
+        "Q": "What were long-term operating lease liabilities at December 31, 2023 (for comparison)?",
+        "A": "$77,333 million"
+    }
+]

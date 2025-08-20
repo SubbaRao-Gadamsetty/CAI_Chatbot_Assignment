@@ -2,12 +2,13 @@
 Evaluation & Comparison Module
 Implements mandatory test questions, extended evaluation, results table, and analysis.
 """
-import logging
-import time
-import streamlit as st
-from typing import List, Dict
+import logging  # For logging evaluation steps
+import time  # For timing responses
+import streamlit as st  # For Streamlit UI
+from typing import List, Dict  # For type annotations
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO)  # Set logging level to INFO
+logging.info('evaluation module loaded.')  # Log module load
 
 def run_evaluation(rag_bot, ft_bot) -> List[Dict]:
     """
@@ -18,7 +19,7 @@ def run_evaluation(rag_bot, ft_bot) -> List[Dict]:
     Returns:
         List[Dict]: Results for each question and method.
     """
-    logging.info("Running evaluation.")
+    logging.info('run_evaluation called.')  # Log function call
     test_questions = [
         "What was Amazon's net income in 2023?",  # high-confidence
         "What was the change in cash flow in 2024?",  # ambiguous
@@ -26,7 +27,8 @@ def run_evaluation(rag_bot, ft_bot) -> List[Dict]:
     ]
     # Add 7 more financial questions
     for i in range(7):
-        test_questions.append(f"What was the total revenue in {2023 + i%2}?")
+        test_questions.append(f"What was the total revenue in {2023 + i%2}?")  # Add revenue questions for 2023/2024
+    logging.info(f'Test questions: {test_questions}')  # Log test questions
     ground_truth = {
         "What was Amazon's net income in 2023?": "Net income for 2023 is $X million.",
         "What was the change in cash flow in 2024?": "Cash flow change for 2024 is $Y million.",
@@ -34,21 +36,24 @@ def run_evaluation(rag_bot, ft_bot) -> List[Dict]:
     }
     for i in range(7):
         ground_truth[f"What was the total revenue in {2023 + i%2}?"] = f"Total revenue for {2023 + i%2} is $Z million."
-    results = []
-    for method, bot in [("RAG", rag_bot), ("Fine-Tuned", ft_bot)]:
-        for q in test_questions:
-            answer, confidence, t = bot.answer(q)
-            correct = 'Y' if ground_truth.get(q, '').lower() in answer.lower() else 'N'
+    logging.info(f'Ground truth: {ground_truth}')  # Log ground truth
+    results = []  # List to store evaluation results
+    for method, bot in [("RAG", rag_bot), ("Fine-Tuned", ft_bot)]:  # Evaluate both chatbots
+        for q in test_questions:  # For each test question
+            logging.info(f'Calling answer for method: {method}, question: {q}')  # Log question being asked
+            answer, confidence, t = bot.answer(q)  # Get answer, confidence, and time
+            logging.info(f'Answer: {answer}, Confidence: {confidence}, Time: {t}')  # Log answer details
+            correct = 'Y' if ground_truth.get(q, '').lower() in answer.lower() else 'N'  # Check correctness
             results.append({
-                'Question': q,
-                'Method': method,
-                'Answer': answer,
-                'Confidence': confidence,
-                'Time(s)': round(t, 2),
-                'Correct (Y/N)': correct
+                'Question': q,  # The question asked
+                'Method': method,  # Chatbot method used
+                'Answer': answer,  # Model's answer
+                'Confidence': confidence,  # Confidence score
+                'Time(s)': round(t, 2),  # Response time in seconds
+                'Correct (Y/N)': correct  # Whether answer is correct
             })
-    logging.info("Evaluation complete.")
-    return results
+    logging.info(f'Evaluation results: {results}')  # Log evaluation results
+    return results  # Return evaluation results
 
 def display_results_table(results: List[Dict]):
     """
@@ -56,19 +61,31 @@ def display_results_table(results: List[Dict]):
     Args:
         results (List[Dict]): Evaluation results.
     """
-    logging.info("Displaying results table.")
-    st.markdown("## Evaluation Results Table")
-    st.dataframe(results)
+    logging.info('display_results_table called.')  # Log function call
+    st.markdown("## Evaluation Results Table")  # Table title
+    st.dataframe(results)  # Show results as dataframe
+    # CSV Export functionality
+    import pandas as pd  # Import pandas for CSV export
+    df = pd.DataFrame(results)  # Convert results to DataFrame
+    csv = df.to_csv(index=False).encode('utf-8')  # Convert DataFrame to CSV
+    st.download_button(
+        label="Download results as CSV",  # Button label
+        data=csv,  # CSV data
+        file_name="evaluation_results.csv",  # Download file name
+        mime="text/csv"  # MIME type
+    )
     # Analysis
-    rag_acc = sum(1 for r in results if r['Method']=='RAG' and r['Correct (Y/N)']=='Y') / 10
-    ft_acc = sum(1 for r in results if r['Method']=='Fine-Tuned' and r['Correct (Y/N)']=='Y') / 10
-    rag_time = sum(r['Time(s)'] for r in results if r['Method']=='RAG') / 10
-    ft_time = sum(r['Time(s)'] for r in results if r['Method']=='Fine-Tuned') / 10
-    st.markdown(f"**RAG Accuracy:** {rag_acc*100:.1f}% | **Avg Time:** {rag_time:.2f}s")
-    st.markdown(f"**Fine-Tuned Accuracy:** {ft_acc*100:.1f}% | **Avg Time:** {ft_time:.2f}s")
-    st.markdown("### Analysis")
+    rag_acc = sum(1 for r in results if r['Method']=='RAG' and r['Correct (Y/N)']=='Y') / 10  # RAG accuracy
+    ft_acc = sum(1 for r in results if r['Method']=='Fine-Tuned' and r['Correct (Y/N)']=='Y') / 10  # Fine-Tuned accuracy
+    rag_time = sum(r['Time(s)'] for r in results if r['Method']=='RAG') / 10  # RAG avg time
+    ft_time = sum(r['Time(s)'] for r in results if r['Method']=='Fine-Tuned') / 10  # Fine-Tuned avg time
+    logging.info(f'RAG Accuracy: {rag_acc}, Avg Time: {rag_time}')  # Log RAG stats
+    logging.info(f'Fine-Tuned Accuracy: {ft_acc}, Avg Time: {ft_time}')  # Log Fine-Tuned stats
+    st.markdown(f"**RAG Accuracy:** {rag_acc*100:.1f}% | **Avg Time:** {rag_time:.2f}s")  # Show RAG stats
+    st.markdown(f"**Fine-Tuned Accuracy:** {ft_acc*100:.1f}% | **Avg Time:** {ft_time:.2f}s")  # Show Fine-Tuned stats
+    st.markdown("### Analysis")  # Analysis section
     st.markdown("- RAG is robust to irrelevant queries due to retrieval guardrails.")
     st.markdown("- Fine-tuned model is faster but may hallucinate on out-of-domain queries.")
     st.markdown("- RAG leverages context for factual answers, but is slower.")
     st.markdown("- Trade-off: RAG = accuracy, Fine-Tuned = speed.")
-    logging.info("Results table and analysis displayed.")
+    logging.info('Results table and analysis displayed.')  # Log display complete
