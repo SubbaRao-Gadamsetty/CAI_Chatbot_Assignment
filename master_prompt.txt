@@ -1,0 +1,110 @@
+You are tasked with generating **Python code** for the following assignment.
+
+### General Requirements
+
+1. **Every single step** from the assignment below must be implemented in the code (do not skip anything).
+2. Add **method-level documentation** (`"""docstring"""`) for every function, explaining its purpose, inputs, outputs, and processing steps.
+3. Add **logging statements** at the start and end of every function to log:
+   * Input parameters (before execution).
+   * Output/return values (after execution).
+   * Any intermediate key events.
+4. Format the code cleanly with modular functions and clear separation between steps.
+5. Use only **open-source models and libraries** (no proprietary APIs).
+6. Implement both **RAG chatbot system** and **Fine-Tuned model chatbot system** using the **same financial data**.
+7. Provide an **end-to-end pipeline** including **UI (Streamlit)**, **evaluation**, and **comparison**.
+
+---
+
+### Assignment (Implement Each Step in Code)
+
+#### 1. Data Collection & Preprocessing
+* Load two financial statement files (`NASDAQ_AMZN_2023.pdf`, `NASDAQ_AMZN_2024.pdf`).
+* Convert documents (PDF, Excel, HTML) to **plain text** using OCR or parsers.
+* Clean text: remove headers, footers, page numbers.
+* Segment into logical sections (income statement, balance sheet, etc.).
+
+#### 2. Retrieval-Augmented Generation (RAG) System
+**2.1 Data Processing**
+* Split cleaned text into chunks (two sizes: 100 & 400 tokens).
+* Assign unique IDs and metadata.
+**2.2 Embedding & Indexing**
+* Embed chunks using small open-source model (e.g., `all-MiniLM-L6-v2`).
+* Build:
+  * Dense vector store (FAISS or ChromaDB).
+  * Sparse index (BM25/TF-IDF).
+**2.3 Hybrid Retrieval**
+* For each query: preprocess (clean, lowercase, stopwords).
+* Generate query embedding.
+* Retrieve top-N chunks from:
+  * Dense retrieval (vector similarity).
+  * Sparse retrieval (BM25).
+* Combine results (union or weighted fusion).
+**2.4 Advanced RAG (Multi-Stage Retrieval)**
+* Stage 1: Broad retrieval.
+* Stage 2: Re-rank with cross-encoder.
+**2.5 Response Generation**
+* Use open-source generative model (DistilGPT2, GPT-2 small, or Llama-2 7B).
+* Concatenate retrieved passages + query.
+* Respect model context length.
+**2.6 Guardrail**
+* Input validation: block irrelevant/harmful queries.
+* Output filtering: flag hallucinated/non-factual outputs.
+**2.7 Interface (Streamlit)**
+* Input query box.
+* Display answer, confidence, method used, response time.
+* Allow switching: **RAG ↔ Fine-Tuned model**.
+
+---
+
+#### 3. Fine-Tuned Model System
+**3.1 Dataset Prep**
+* Use ~50 Q/A pairs.
+* Convert into fine-tuning dataset format.
+**3.2 Model Selection**
+* Choose small open-source LM (DistilBERT, MiniLM, GPT-2 Small, Llama-2 7B, Falcon 7B, Mistral 7B).
+**3.3 Baseline Evaluation**
+* Test pre-trained model on 10 questions.
+* Record accuracy, confidence, inference speed.
+**3.4 Fine-Tuning**
+* Fine-tune model on dataset.
+* Log hyperparameters (lr, batch size, epochs, compute setup).
+**3.5 Advanced Fine-Tuning**
+* Implement **Supervised Instruction Fine-Tuning** on Q/A pairs.
+**3.6 Guardrail**
+* Same as RAG: input/output side filter.
+**3.7 Interface**
+* Integrate into same UI as RAG.
+* Display: answer, confidence, method, inference time.
+
+---
+
+#### 4. Testing, Evaluation & Comparison
+**4.1 Mandatory Test Questions**
+* Relevant high-confidence fact.
+* Relevant low-confidence / ambiguous.
+* Irrelevant query (e.g., "What is the capital of France?").
+**4.2 Extended Evaluation**
+* Test 10 different financial questions.
+* Record for each:
+  * Ground-truth answer.
+  * Model-generated answer.
+  * Confidence score.
+  * Response time.
+  * Correctness (Y/N).
+**4.3 Results Table**
+* Generate structured table with columns:
+  `Question | Method | Answer | Confidence | Time(s) | Correct (Y/N)`
+**4.4 Analysis**
+* Compare inference speed & accuracy.
+* Discuss strengths of RAG vs Fine-Tuning.
+* Evaluate robustness to irrelevant queries.
+* Document practical trade-offs.
+
+---
+
+### Deliverable
+Generate a **single Python codebase** that:
+* Implements all above steps.
+* Uses modular functions with logging + documentation.
+* Provides Streamlit interface for interactive testing.
+* Includes evaluation & comparison with results table.

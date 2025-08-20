@@ -1,0 +1,13 @@
+# Requirements for Financial Chatbot Assignment
+streamlit
+PyPDF2
+pdf2image
+pytesseract
+pandas
+scikit-learn
+sentence-transformers
+faiss-cpu
+chromadb
+transformers
+torch
+openpyxl
