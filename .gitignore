@@ -2,6 +2,9 @@ master_prompt.txt
 rag_system_prompt.txt
 finetune_prompt.txt
 evaluation_prompt.txt
+research.py
+logger_setup.py
+logs/
 *.pyc
 __pycache__/
 *.pyo

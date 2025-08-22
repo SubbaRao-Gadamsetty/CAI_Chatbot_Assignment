@@ -17,6 +17,7 @@
 # Advanced fine-tuning method for instruction-style Q/A pairs
 # Allows customization of output directory, learning rate, batch size, and epochs
 # Uses HuggingFace Trainer for training and saving model
+from logger_setup import logger  # Use shared logger for project-wide logger
 
 def advanced_fine_tune(self, output_dir: str = "advanced_finetuned_model", learning_rate: float = 2e-5, batch_size: int = 8, num_epochs: int = 3):
     """
@@ -31,8 +32,8 @@ def advanced_fine_tune(self, output_dir: str = "advanced_finetuned_model", learn
         import torch  # Import PyTorch
         from transformers import Trainer, TrainingArguments, DataCollatorForLanguageModeling  # Import HuggingFace tools
         device = "cuda" if torch.cuda.is_available() else "cpu"  # Select device
-        logging.info("Running advanced fine-tuning with HuggingFace Trainer.")
-        logging.info(f"Hyperparameters: learning_rate={learning_rate}, batch_size={batch_size}, num_epochs={num_epochs}, device={device}")
+        logger.info("Running advanced fine-tuning with HuggingFace Trainer.")
+        logger.info(f"Hyperparameters: learning_rate={learning_rate}, batch_size={batch_size}, num_epochs={num_epochs}, device={device}")
 
         # Prepare instruction-style dataset
         dataset = self.prepare_finetuning_dataset()  # Get prompt/response pairs
@@ -57,15 +58,16 @@ def advanced_fine_tune(self, output_dir: str = "advanced_finetuned_model", learn
             num_train_epochs=num_epochs,  # Number of epochs
             per_device_train_batch_size=batch_size,  # Batch size
             learning_rate=learning_rate,  # Learning rate
-            logging_dir=f'{output_dir}/logs',  # Logging directory
+            logger_dir=f'{output_dir}/logs',  # logger directory
             save_steps=10,  # Save every 10 steps
             save_total_limit=2,  # Limit number of saved models
             report_to=["none"],  # No reporting
         )
         data_collator = DataCollatorForLanguageModeling(
-            tokenizer=self.tokenizer,  # Tokenizer
-            mlm=False,  # No masked language modeling
+            tokenizer=self.tokenizer,
+            mlm=False  # No masked language modeling
         )
+        logger.info('finetune_system module loaded.')
         trainer = Trainer(
             model=self.model,  # Model to train
             args=training_args,  # Training arguments
@@ -75,11 +77,11 @@ def advanced_fine_tune(self, output_dir: str = "advanced_finetuned_model", learn
         trainer.train()  # Train the model
         self.model.save_pretrained(output_dir)  # Save trained model
         self.tokenizer.save_pretrained(output_dir)  # Save tokenizer
-        logging.info(f"Advanced fine-tuning complete. Model saved to {output_dir}")
+        logger.info(f"Advanced fine-tuning complete. Model saved to {output_dir}")
     except ImportError as e:
-        logging.error(f"Required package not found: {e}. Please ensure all dependencies are installed.")
+        logger.error(f"Required package not found: {e}. Please ensure all dependencies are installed.")
     except Exception as e:
-        logging.error(f"Error during advanced fine-tuning: {e}")
+        logger.error(f"Error during advanced fine-tuning: {e}")
 
 # Runs baseline benchmarking on 10 test questions and prints accuracy, confidence, and inference speed
 
@@ -111,14 +113,14 @@ def run_baseline_benchmarking():
 Fine-Tuned Model System Module
 Implements dataset prep, baseline evaluation, fine-tuning, supervised instruction tuning, and guardrails.
 """
-import logging  # For logging steps
+
 import time  # For timing responses
 from typing import List, Dict, Tuple  # For type annotations
 from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer, Trainer, TrainingArguments  # For model and training
+
 import random  # For generating random confidence scores
 
-logging.basicConfig(level=logging.INFO)
-logging.info('finetune_system module loaded.')
+logger.info('finetune_system module loaded.')
 
 class FineTunedChatbot:
     """
@@ -132,7 +134,7 @@ class FineTunedChatbot:
             docs (List[str]): List of cleaned document texts.
             sections (Dict[str, str]): Sectioned texts.
         """
-        logging.info(f'FineTunedChatbot __init__ called. docs: {len(docs)}, sections: {len(sections)}')
+        logger.info(f'FineTunedChatbot __init__ called. docs: {len(docs)}, sections: {len(sections)}')
         self.docs = docs  # Store document texts
         self.sections = sections  # Store sectioned texts
         self.model_name = 'distilgpt2'
@@ -144,7 +146,7 @@ class FineTunedChatbot:
         from modules.data_preprocessing import load_qa_pairs_from_json  # Import Q/A loader
         # Load Q/A pairs from the provided JSON file for fine-tuning
         self.qa_pairs = load_qa_pairs_from_json('q&a/amazon_qa_pairs_full.json')  # Load Q/A pairs
-        logging.info(f'Loaded {len(self.qa_pairs)} Q/A pairs.')
+        logger.info(f'Loaded {len(self.qa_pairs)} Q/A pairs.')
 
     def prepare_finetuning_dataset(self) -> List[Dict[str, str]]:
         """
@@ -152,20 +154,20 @@ class FineTunedChatbot:
         Returns:
             List[Dict[str, str]]: List of dicts with 'prompt' and 'response' keys.
         """
-        logging.info('prepare_finetuning_dataset called.')
+        logger.info('prepare_finetuning_dataset called.')
         dataset = []  # List to store prompt/response pairs
         for pair in self.qa_pairs:  # Iterate over Q/A pairs
             prompt = f"Question: {pair['question']}\nAnswer: "  # Format prompt
             response = pair['answer']  # Get response
             dataset.append({'prompt': prompt, 'response': response})  # Add to dataset
-        logging.info(f'Prepared {len(dataset)} prompt/response pairs.')
+        logger.info(f'Prepared {len(dataset)} prompt/response pairs.')
         return dataset  # Return dataset
         self.model_name = 'distilgpt2'
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         from transformers import AutoModelForCausalLM
         self.model = AutoModelForCausalLM.from_pretrained(self.model_name)
         self.generator = pipeline('text-generation', model=self.model_name)
-        logging.info("FineTunedChatbot initialized.")
+        logger.info("FineTunedChatbot initialized.")
 
     # Removed: prepare_qa_dataset (now using load_qa_pairs_from_json)
 
@@ -177,16 +179,16 @@ class FineTunedChatbot:
         Returns:
             List[Tuple[str, float, float]]: (answer, confidence, time)
         """
-        logging.info(f'baseline_evaluation called. questions: {questions}')
+        logger.info(f'baseline_evaluation called. questions: {questions}')
         results = []  # List to store results
         for q in questions:  # Iterate over questions
             start = time.time()  # Start timer
             output = self.generator(q, max_length=64)[0]['generated_text']  # Generate answer
             confidence = random.uniform(0.5, 0.9)  # Simulate confidence
             end = time.time()  # End timer
-            logging.info(f'Question: {q}, Output: {output}, Confidence: {confidence}, Time: {end-start}')
+            logger.info(f'Question: {q}, Output: {output}, Confidence: {confidence}, Time: {end-start}')
             results.append((output, confidence, end-start))  # Add result
-        logging.info('Baseline evaluation complete.')  # Log completion
+        logger.info('Baseline evaluation complete.')  # Log completion
         return results  # Return results
 
     def fine_tune(self, output_dir: str = "finetuned_model"):
@@ -195,12 +197,12 @@ class FineTunedChatbot:
         Args:
             output_dir (str): Directory to save the fine-tuned model.
         """
-        logging.info(f'fine_tune called. output_dir: {output_dir}')
+        logger.info(f'fine_tune called. output_dir: {output_dir}')
         try:
             import torch  # Import PyTorch
             from transformers import Trainer, TrainingArguments, DataCollatorForLanguageModeling  # Import HuggingFace tools
             device = "cuda" if torch.cuda.is_available() else "cpu"  # Select device
-            logging.info(f"Hyperparameters: learning_rate=2e-5, batch_size=8, num_epochs=3, device={device}")
+            logger.info(f"Hyperparameters: learning_rate=2e-5, batch_size=8, num_epochs=3, device={device}")
 
             class QADataset(torch.utils.data.Dataset):  # Custom PyTorch dataset
                 def __init__(self, qa_pairs, tokenizer):
@@ -224,7 +226,7 @@ class FineTunedChatbot:
                 num_train_epochs=3,  # Number of epochs
                 per_device_train_batch_size=8,  # Batch size
                 learning_rate=2e-5,  # Learning rate
-                logging_dir=f'{output_dir}/logs',  # Logging directory
+                logger_dir=f'{output_dir}/logs',  # logger directory
                 save_steps=10,  # Save every 10 steps
                 save_total_limit=2,  # Limit number of saved models
                 report_to=["none"],  # No reporting
@@ -242,11 +244,11 @@ class FineTunedChatbot:
             trainer.train()  # Train the model
             self.model.save_pretrained(output_dir)  # Save trained model
             self.tokenizer.save_pretrained(output_dir)  # Save tokenizer
-            logging.info(f"Fine-tuning complete. Model saved to {output_dir}")
+            logger.info(f"Fine-tuning complete. Model saved to {output_dir}")
         except ImportError as e:
-            logging.error(f"Required package not found: {e}. Please ensure all dependencies are installed.")
+            logger.error(f"Required package not found: {e}. Please ensure all dependencies are installed.")
         except Exception as e:
-            logging.error(f"Error during fine-tuning: {e}")
+            logger.error(f"Error during fine-tuning: {e}")
 
     def supervised_instruction_tuning(self, output_dir: str = "sft_model"):
         """
@@ -254,12 +256,12 @@ class FineTunedChatbot:
         Args:
             output_dir (str): Directory to save the SFT model.
         """
-        logging.info(f'supervised_instruction_tuning called. output_dir: {output_dir}')
+        logger.info(f'supervised_instruction_tuning called. output_dir: {output_dir}')
         try:
             import torch  # Import PyTorch
             from transformers import Trainer, TrainingArguments, DataCollatorForLanguageModeling  # Import HuggingFace tools
             device = "cuda" if torch.cuda.is_available() else "cpu"  # Select device
-            logging.info(f"Hyperparameters: learning_rate=2e-5, batch_size=8, num_epochs=3, device={device}")
+            logger.info(f"Hyperparameters: learning_rate=2e-5, batch_size=8, num_epochs=3, device={device}")
 
             # Prepare instruction-style dataset
             sft_dataset = self.prepare_finetuning_dataset()  # Get prompt/response pairs
@@ -284,7 +286,7 @@ class FineTunedChatbot:
                 num_train_epochs=3,  # Number of epochs
                 per_device_train_batch_size=8,  # Batch size
                 learning_rate=2e-5,  # Learning rate
-                logging_dir=f'{output_dir}/logs',  # Logging directory
+                logger_dir=f'{output_dir}/logs',  # logger directory
                 save_steps=10,  # Save every 10 steps
                 save_total_limit=2,  # Limit number of saved models
                 report_to=["none"],  # No reporting
@@ -302,11 +304,11 @@ class FineTunedChatbot:
             trainer.train()  # Train the model
             self.model.save_pretrained(output_dir)  # Save trained model
             self.tokenizer.save_pretrained(output_dir)  # Save tokenizer
-            logging.info(f"Supervised instruction fine-tuning complete. Model saved to {output_dir}")
+            logger.info(f"Supervised instruction fine-tuning complete. Model saved to {output_dir}")
         except ImportError as e:
-            logging.error(f"Required package not found: {e}. Please ensure all dependencies are installed.")
+            logger.error(f"Required package not found: {e}. Please ensure all dependencies are installed.")
         except Exception as e:
-            logging.error(f"Error during supervised instruction fine-tuning: {e}")
+            logger.error(f"Error during supervised instruction fine-tuning: {e}")
 
     def guardrail(self, query: str, response: str) -> Tuple[bool, str]:
         """
@@ -317,16 +319,16 @@ class FineTunedChatbot:
         Returns:
             Tuple[bool, str]: (is_safe, filtered_response)
         """
-        logging.info(f'guardrail called. query: {query}, response: {response[:100]}...')
+        logger.info(f'guardrail called. query: {query}, response: {response[:100]}...')
         irrelevant = ["capital of france", "weather", "sports"]  # List of irrelevant topics
         for word in irrelevant:  # Check if query contains irrelevant topic
             if word in query.lower():
-                logging.warning("Blocked irrelevant query.")  # Log blocked query
+                logger.warning("Blocked irrelevant query.")  # Log blocked query
                 return False, "Query is irrelevant to financial statements."  # Return blocked message
         if "not factual" in response:  # Check for hallucinated output
-            logging.warning("Flagged hallucinated output.")  # Log flagged output
+            logger.warning("Flagged hallucinated output.")  # Log flagged output
             return False, "Response may be hallucinated."  # Return flagged message
-        logging.info("Guardrail passed.")  # Log guardrail passed
+        logger.info("Guardrail passed.")  # Log guardrail passed
         return True, response  # Return safe response
 
     def answer(self, query: str) -> Tuple[str, float, float]:
@@ -337,7 +339,7 @@ class FineTunedChatbot:
         Returns:
             Tuple[str, float, float]: (answer, confidence, response_time)
         """
-        logging.info(f'answer called. query: {query}')
+        logger.info(f'answer called. query: {query}')
         start = time.time()
         output = self.generator(query, max_length=128)[0]['generated_text']
         # Dynamic post-processing for financial queries
@@ -358,5 +360,5 @@ class FineTunedChatbot:
         confidence = random.uniform(0.6, 0.95)
         is_safe, filtered = self.guardrail(query, concise_answer)
         end = time.time()
-        logging.info(f'Answer: {filtered[:100]}..., Confidence: {confidence}, Time: {end-start}')
+        logger.info(f'Answer: {filtered[:100]}..., Confidence: {confidence}, Time: {end-start}')
         return filtered, confidence, end-start

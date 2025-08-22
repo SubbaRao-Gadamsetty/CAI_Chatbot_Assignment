@@ -2,7 +2,7 @@
 RAG System Module
 Implements chunking, embedding, dense/sparse indexing, hybrid retrieval, multi-stage retrieval, response generation, and guardrails.
 """
-import logging  # For logging steps
+from logger_setup import logger  # Use shared logger for project-wide logger
 import time  # For timing responses
 from typing import List, Dict, Tuple  # For type annotations
 from sentence_transformers import SentenceTransformer  # For sentence embeddings
@@ -12,8 +12,7 @@ from sklearn.metrics.pairwise import cosine_similarity  # For similarity calcula
 from transformers import pipeline  # For text generation
 import numpy as np  # For numerical operations
 
-logging.basicConfig(level=logging.INFO)
-logging.info('rag_system module loaded.')
+logger.info('rag_system module loaded.')
 
 class RAGChatbot:
     """
@@ -27,7 +26,7 @@ class RAGChatbot:
             docs (List[str]): List of cleaned document texts.
             sections (Dict[str, str]): Sectioned texts.
         """
-        logging.info(f'RAGChatbot __init__ called. docs: {len(docs)}, sections: {len(sections)}')
+        logger.info(f'RAGChatbot __init__ called. docs: {len(docs)}, sections: {len(sections)}')
         self.docs = docs  # Store document texts
         self.sections = sections  # Store sectioned texts
         self.chunks_100, self.chunks_400 = self.chunk_documents(docs)  # Chunk documents
@@ -36,7 +35,7 @@ class RAGChatbot:
         self.vector_index_400 = self.build_dense_index(self.chunks_400)  # Dense index for 400-token chunks
         self.bm25 = self.build_sparse_index(self.chunks_400)  # Sparse BM25 index
         self.generator = pipeline('text-generation', model='distilgpt2')  # Text generation pipeline
-        logging.info('RAGChatbot initialized.')  # Log completion
+        logger.info('RAGChatbot initialized.')  # Log completion
 
     def chunk_documents(self, docs: List[str]) -> Tuple[List[Dict], List[Dict]]:
         """
@@ -46,7 +45,7 @@ class RAGChatbot:
         Returns:
             Tuple[List[Dict], List[Dict]]: Chunks of 100 and 400 tokens.
         """
-        logging.info(f'chunk_documents called. docs: {len(docs)}')
+        logger.info(f'chunk_documents called. docs: {len(docs)}')
         from transformers import AutoTokenizer  # Import tokenizer
         tokenizer = AutoTokenizer.from_pretrained('distilgpt2')  # Load tokenizer
         chunks_100 = []  # List for 100-token chunks
@@ -75,7 +74,16 @@ class RAGChatbot:
                     'section': self.sections.get(str(doc_id), None) if hasattr(self, 'sections') else None  # Section info
                 }
                 chunks_400.append({'id': f'{doc_id}_400_{i}', 'text': chunk_text, 'meta': meta})  # Add chunk
-        logging.info(f'Chunked into {len(chunks_100)} (100 tokens) and {len(chunks_400)} (400 tokens) chunks.')  # Log chunk counts
+        # Log first 5 chunks for each chunk size
+        logger.info('--- Chunking Preview: First 5 Chunks (100 tokens) ---')
+        for i, chunk in enumerate(chunks_100[:5]):
+            preview = chunk['text'][:100].replace('\n', ' ')
+            logger.info(f"100-token chunk {i+1}: id={chunk['id']}, meta={chunk['meta']}, preview={preview}")
+        logger.info('--- Chunking Preview: First 5 Chunks (400 tokens) ---')
+        for i, chunk in enumerate(chunks_400[:5]):
+            preview = chunk['text'][:100].replace('\n', ' ')
+            logger.info(f"400-token chunk {i+1}: id={chunk['id']}, meta={chunk['meta']}, preview={preview}")
+        logger.info(f'Chunked into {len(chunks_100)} (100 tokens) and {len(chunks_400)} (400 tokens) chunks.')  # Log chunk counts
         return chunks_100, chunks_400  # Return chunk lists
 
     def build_dense_index(self, chunks: List[Dict]):
@@ -86,9 +94,9 @@ class RAGChatbot:
         Returns:
             faiss.IndexFlatL2 or None: FAISS index or None if no chunks.
         """
-        logging.info(f'build_dense_index called. chunks: {len(chunks)}')
+        logger.info(f'build_dense_index called. chunks: {len(chunks)}')
         if not chunks:
-            logging.warning('No chunks to index.')
+            logger.warning('No chunks to index.')
             return None  # Return None
 
         texts = [c['text'] for c in chunks]  # Get chunk texts
@@ -97,7 +105,14 @@ class RAGChatbot:
         embeddings = np.array(embeddings)
         index = faiss.IndexFlatL2(embeddings.shape[1])  # Create FAISS index
         index.add(np.array(embeddings))  # Add embeddings to index
-        logging.info('Dense index built.')  # Log completion
+        # Log first 5 embeddings and corresponding chunk info
+        logger.info('--- Dense Index Preview: First 5 Chunks and Embeddings ---')
+        for i in range(min(5, len(chunks))):
+            chunk_id = chunks[i].get('id', f'chunk_{i}')
+            preview = texts[i][:100].replace('\n', ' ')
+            emb_preview = embeddings[i][:5] if embeddings.shape[1] >= 5 else embeddings[i]
+            logger.info(f"Index {i+1}: id={chunk_id}, text_preview={preview}, embedding_preview={emb_preview}")
+        logger.info('Dense index built.')  # Log completion
         return index  # Return index
 
     def build_sparse_index(self, chunks: List[Dict]):
@@ -108,12 +123,18 @@ class RAGChatbot:
         Returns:
             BM25Okapi: BM25 index for sparse retrieval.
         """
-        logging.info(f'build_sparse_index called. chunks: {len(chunks)}')
+        logger.info(f'build_sparse_index called. chunks: {len(chunks)}')
         from rank_bm25 import BM25Okapi  # Import BM25
         texts = [c['text'] for c in chunks]  # Get chunk texts
         tokenized_texts = [text.split() for text in texts]  # Tokenize texts
+        # Log first 5 tokenized texts and chunk IDs
+        logger.info('--- Sparse Index Preview: First 5 Chunks and Tokenized Texts ---')
+        for i in range(min(5, len(chunks))):
+            chunk_id = chunks[i].get('id', f'chunk_{i}')
+            token_preview = tokenized_texts[i][:10]  # Show first 10 tokens
+            logger.info(f"Index {i+1}: id={chunk_id}, token_preview={token_preview}")
         bm25 = BM25Okapi(tokenized_texts)  # Create BM25 index
-        logging.info('Sparse BM25 index built.')  # Log completion
+        logger.info('Sparse BM25 index built.')  # Log completion
         return bm25  # Return BM25 index
 
     def preprocess_query(self, query: str) -> str:
@@ -124,7 +145,7 @@ class RAGChatbot:
         Returns:
             str: Preprocessed query.
         """
-        logging.info(f'preprocess_query called. query: {query}')
+        logger.info(f'preprocess_query called. query: {query}')
         import re  # Import regex
         from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS  # Import stopwords
         # Lowercase
@@ -135,7 +156,7 @@ class RAGChatbot:
         tokens = query.split()  # Split into tokens
         filtered_tokens = [t for t in tokens if t not in ENGLISH_STOP_WORDS]  # Remove stopwords
         preprocessed = ' '.join(filtered_tokens)  # Join tokens
-        logging.info(f'Preprocessed query: {preprocessed}')  # Log result
+        logger.info(f'Preprocessed query: {preprocessed}')  # Log result
         return preprocessed  # Return preprocessed query
 
     def hybrid_retrieve(self, query: str, top_n: int = 5, alpha: float = 0.5) -> List[str]:
@@ -155,25 +176,48 @@ class RAGChatbot:
         Returns:
             List[str]: Top-N retrieved chunk texts for re-ranking.
         """
-        logging.info(f'hybrid_retrieve called. query: {query}, top_n: {top_n}, alpha: {alpha}')
+        logger.info(f'[hybrid_retrieve] Called with query: "{query}", top_n: {top_n}, alpha: {alpha}')
         # Dense retrieval: semantic similarity
+        logger.info('[hybrid_retrieve] Step 1: Encoding query for dense retrieval.')
         query_emb = self.model.encode([query])  # Encode query
         chunk_texts = [c['text'] for c in self.chunks_400]  # Get chunk texts
+        logger.info(f'[hybrid_retrieve] Step 2: Encoding {len(chunk_texts)} chunks for dense retrieval.')
         chunk_embs = self.model.encode(chunk_texts)  # Encode chunks
+        logger.info('[hybrid_retrieve] Step 3: Calculating dense (semantic) similarity scores.')
         dense_scores = cosine_similarity(query_emb, chunk_embs)[0]  # Compute dense scores
+        logger.info(f'[hybrid_retrieve] Dense scores calculated. Example scores: {dense_scores[:5]}')
+
         # Sparse retrieval: keyword relevance
+        logger.info('[hybrid_retrieve] Step 4: Tokenizing query for sparse retrieval.')
         query_tokens = query.split()  # Tokenize query
+        logger.info(f'[hybrid_retrieve] Query tokens: {query_tokens}')
+        logger.info('[hybrid_retrieve] Step 5: Calculating BM25 (sparse) relevance scores.')
         bm25_scores = self.bm25.get_scores(query_tokens)  # Get BM25 scores
+        logger.info(f'[hybrid_retrieve] BM25 scores calculated. Example scores: {bm25_scores[:5]}')
+
         # Normalize scores for fair fusion
+        logger.info('[hybrid_retrieve] Step 6: Normalizing dense and sparse scores.')
         if np.max(dense_scores) > 0:
             dense_scores = dense_scores / np.max(dense_scores)  # Normalize dense
         if np.max(bm25_scores) > 0:
             bm25_scores = bm25_scores / np.max(bm25_scores)  # Normalize BM25
+        logger.info(f'[hybrid_retrieve] Normalized dense scores: {dense_scores[:5]}')
+        logger.info(f'[hybrid_retrieve] Normalized BM25 scores: {bm25_scores[:5]}')
+
         # Weighted score fusion: combine dense and sparse scores
+        logger.info('[hybrid_retrieve] Step 7: Fusing scores with alpha={}'.format(alpha))
         combined_scores = alpha * dense_scores + (1 - alpha) * bm25_scores  # Weighted fusion
+        logger.info(f'[hybrid_retrieve] Combined scores: {combined_scores[:5]}')
+
+        # Top-N chunks are selected based on combined scores for further re-ranking
+        logger.info('[hybrid_retrieve] Step 8: Selecting top-N chunks based on combined scores.')
         top_indices = np.argsort(combined_scores)[-top_n:][::-1]  # Get top indices
+        logger.info(f'[hybrid_retrieve] Top indices: {top_indices}')
         retrieved = [self.chunks_400[i]['text'] for i in top_indices]  # Get top chunks
-        logging.info(f'Retrieved {len(retrieved)} chunks.')  # Log retrieval
+        for idx, i in enumerate(top_indices):
+            preview = self.chunks_400[i]['text'][:100].replace('\n', ' ')
+            logger.info(f'[hybrid_retrieve] Top chunk {idx+1}: index={i}, preview={preview}')
+        logger.info(f'[hybrid_retrieve] Retrieved {len(retrieved)} chunks.')  # Log retrieval
         return retrieved  # Return retrieved chunks
 
     def rerank_chunks(self, query: str, chunks: List[str]) -> List[str]:
@@ -189,13 +233,24 @@ class RAGChatbot:
         Returns:
             List[str]: Reranked chunk texts sorted by cross-encoder score.
         """
-        logging.info(f'rerank_chunks called. query: {query}, chunks: {len(chunks)}')
+        logger.info(f'[rerank_chunks] Called with query: "{query}", number of chunks: {len(chunks)}')
         from sentence_transformers import CrossEncoder  # Import cross-encoder
-        cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')  # Load cross-encoder
+        logger.info('[rerank_chunks] Step 1: Creating query-chunk pairs for cross-encoder.')
         pairs = [[query, chunk] for chunk in chunks]  # Create query-chunk pairs
+        for i, pair in enumerate(pairs):
+            preview = pair[1][:100].replace('\n', ' ')
+            logger.info(f'[rerank_chunks] Pair {i+1}: query="{pair[0]}", chunk_preview="{preview}"')
+        logger.info('[rerank_chunks] Step 2: Loading cross-encoder model.')
+        cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')  # Load cross-encoder
+        logger.info('[rerank_chunks] Step 3: Predicting relevance scores for each pair.')
         scores = cross_encoder.predict(pairs)  # Get relevance scores
+        logger.info(f'[rerank_chunks] Scores: {scores}')
+        logger.info('[rerank_chunks] Step 4: Sorting chunks by cross-encoder score.')
         reranked = [chunk for _, chunk in sorted(zip(scores, chunks), key=lambda x: -x[0])]  # Sort chunks
-        logging.info('Chunks reranked.')  # Log completion
+        for i, (score, chunk) in enumerate(sorted(zip(scores, chunks), key=lambda x: -x[0])):
+            preview = chunk[:100].replace('\n', ' ')
+            logger.info(f'[rerank_chunks] Reranked {i+1}: score={score}, chunk_preview="{preview}"')
+        logger.info('[rerank_chunks] Chunks reranked.')  # Log completion
         return reranked  # Return reranked chunks
 
     def generate_response(self, query: str, context_chunks: List[str]) -> Tuple[str, float]:
@@ -208,7 +263,7 @@ class RAGChatbot:
         Returns:
             Tuple[str, float]: Generated answer and confidence score.
         """
-        logging.info(f'generate_response called. query: {query}, context_chunks: {len(context_chunks)}')
+        logger.info(f'generate_response called. query: {query}, context_chunks: {len(context_chunks)}')
         from transformers import AutoTokenizer  # Import tokenizer
         tokenizer = AutoTokenizer.from_pretrained('distilgpt2')  # Load tokenizer
         context = ' '.join(context_chunks)  # Concatenate context chunks
@@ -242,7 +297,7 @@ class RAGChatbot:
                         concise_answer = f"${value} million"
         # Simulate confidence
         confidence = min(1.0, len(context_chunks)/5)  # Confidence based on context
-        logging.info(f'Response generated: {concise_answer[:100]}..., Confidence: {confidence}')
+        logger.info(f'Response generated: {concise_answer[:100]}..., Confidence: {confidence}')
         return concise_answer, confidence  # Return concise answer and confidence
 
     def guardrail(self, query: str, response: str) -> Tuple[bool, str]:
@@ -254,18 +309,18 @@ class RAGChatbot:
         Returns:
             Tuple[bool, str]: (is_safe, filtered_response)
         """
-        logging.info(f'guardrail called. query: {query}, response: {response[:100]}...')
+        logger.info(f'guardrail called. query: {query}, response: {response[:100]}...')
         # Block irrelevant queries
         irrelevant = ["capital of france", "weather", "sports"]  # List of irrelevant topics
         for word in irrelevant:  # Check if query contains irrelevant topic
             if word in query.lower():
-                logging.warning("Blocked irrelevant query.")
+                logger.warning("Blocked irrelevant query.")
                 return False, "Query is irrelevant to financial statements."
         # Flag hallucinations (simple heuristic)
         if "not factual" in response:
-            logging.warning("Flagged hallucinated output.")
+            logger.warning("Flagged hallucinated output.")
             return False, "Response may be hallucinated."
-        logging.info("Guardrail passed.")
+        logger.info("Guardrail passed.")
         return True, response  # Return safe response
 
     def answer(self, query: str) -> Tuple[str, float, float]:
@@ -276,7 +331,7 @@ class RAGChatbot:
         Returns:
             Tuple[str, float, float]: (answer, confidence, response_time)
         """
-        logging.info(f'answer called. query: {query}')
+        logger.info(f'answer called. query: {query}')
         start = time.time()
         pre_q = self.preprocess_query(query)
         chunks = self.hybrid_retrieve(pre_q)
@@ -284,5 +339,5 @@ class RAGChatbot:
         response, confidence = self.generate_response(pre_q, reranked)
         is_safe, filtered = self.guardrail(pre_q, response)
         end = time.time()
-        logging.info(f'Answer: {filtered[:100]}..., Confidence: {confidence}, Time: {end-start}')
+        logger.info(f'Answer: {filtered[:100]}..., Confidence: {confidence}, Time: {end-start}')
         return filtered, confidence, end-start
