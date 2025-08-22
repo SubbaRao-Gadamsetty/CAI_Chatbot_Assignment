@@ -333,9 +333,28 @@ class FineTunedChatbot:
         """
         logger.info(f'answer called. query: {query}')
         start = time.time()
+        # Advanced irrelevant query detection
+        import re
+        irrelevant_keywords = [
+            'capital of france', 'weather', 'sports', 'population', 'president', 'prime minister', 'holiday', 'festival',
+            'distance', 'height', 'temperature', 'recipe', 'movie', 'actor', 'actress', 'song', 'music', 'color', 'animal',
+            'country', 'city', 'state', 'language', 'currency', 'flag', 'food', 'drink', 'school', 'university', 'college',
+            'history', 'geography', 'science', 'math', 'physics', 'chemistry', 'biology', 'art', 'painting', 'museum',
+            'book', 'author', 'writer', 'novel', 'story', 'poem', 'poet', 'game', 'video game', 'app', 'software', 'hardware'
+        ]
+        query_lc = query.lower()
+        if any(re.search(rf'\b{re.escape(word)}\b', query_lc) for word in irrelevant_keywords):
+            end = time.time()
+            logger.warning('Blocked advanced irrelevant query.')
+            return "Query is irrelevant to financial statements.", 0.0, end-start
+        # Optionally, use intent classification (placeholder for actual NLP intent model)
+        # intent = self.detect_intent(query)
+        # if intent == 'irrelevant':
+        #     end = time.time()
+        #     logger.warning('Blocked by intent model.')
+        #     return "Query is irrelevant to financial statements.", 0.0, end-start
         output = self.generator(query, max_length=128)[0]['generated_text']
         # Dynamic post-processing for financial queries
-        import re
         concise_answer = output
         # Fallback: if query matches a Q/A pair, use ground truth
         for pair in self.qa_pairs:
@@ -345,10 +364,10 @@ class FineTunedChatbot:
         else:
             # Try to extract net income, net sales, etc. using regex
             if any(key in query.lower() for key in ['net income', 'net sales', 'operating income', 'expenses', 'cash', 'debt', 'assets', 'equity']):
-                # Extract $amount (million/billion) pattern
                 match = re.search(r'(\$[\d,]+(?:\.\d+)?\s*million|\$[\d,]+(?:\.\d+)?\s*billion|\$[\d,]+(?:\.\d+)?\s*\([\$\d\.]+\s*billion\))', output)
                 if match:
                     concise_answer = match.group(1)
+        import random
         confidence = random.uniform(0.6, 0.95)
         is_safe, filtered = self.guardrail(query, concise_answer)
         end = time.time()

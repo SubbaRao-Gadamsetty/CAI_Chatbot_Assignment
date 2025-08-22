@@ -332,6 +332,27 @@ class RAGChatbot:
         """
         logger.info(f'answer called. query: {query}')
         start = time.time()
+        # Advanced irrelevant query detection
+        import re
+        irrelevant_keywords = [
+            'capital of france', 'weather', 'sports', 'population', 'president', 'prime minister', 'holiday', 'festival',
+            'distance', 'height', 'temperature', 'recipe', 'movie', 'actor', 'actress', 'song', 'music', 'color', 'animal',
+            'country', 'city', 'state', 'language', 'currency', 'flag', 'food', 'drink', 'school', 'university', 'college',
+            'history', 'geography', 'science', 'math', 'physics', 'chemistry', 'biology', 'art', 'painting', 'museum',
+            'book', 'author', 'writer', 'novel', 'story', 'poem', 'poet', 'game', 'video game', 'app', 'software', 'hardware'
+        ]
+        # Use regex and lowercasing for robust detection
+        query_lc = query.lower()
+        if any(re.search(rf'\b{re.escape(word)}\b', query_lc) for word in irrelevant_keywords):
+            end = time.time()
+            logger.warning('Blocked advanced irrelevant query.')
+            return "Query is irrelevant to financial statements.", 0.0, end-start
+        # Optionally, use intent classification (placeholder for actual NLP intent model)
+        # intent = self.detect_intent(query)
+        # if intent == 'irrelevant':
+        #     end = time.time()
+        #     logger.warning('Blocked by intent model.')
+        #     return "Query is irrelevant to financial statements.", 0.0, end-start
         pre_q = self.preprocess_query(query)
         chunks = self.hybrid_retrieve(pre_q)
         reranked = self.rerank_chunks(pre_q, chunks)

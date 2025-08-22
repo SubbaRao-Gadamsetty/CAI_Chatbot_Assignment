@@ -75,10 +75,12 @@ def display_results_table(results: List[Dict]):
         mime="text/csv"  # MIME type
     )
     # Analysis
-    rag_acc = sum(1 for r in results if r['Method']=='RAG' and r['Correct (Y/N)']=='Y') / 10  # RAG accuracy
-    ft_acc = sum(1 for r in results if r['Method']=='Fine-Tuned' and r['Correct (Y/N)']=='Y') / 10  # Fine-Tuned accuracy
-    rag_time = sum(r['Time(s)'] for r in results if r['Method']=='RAG') / 10  # RAG avg time
-    ft_time = sum(r['Time(s)'] for r in results if r['Method']=='Fine-Tuned') / 10  # Fine-Tuned avg time
+    rag_count = sum(1 for r in results if r['Method']=='RAG')
+    ft_count = sum(1 for r in results if r['Method']=='Fine-Tuned')
+    rag_acc = sum(1 for r in results if r['Method']=='RAG' and r['Correct (Y/N)']=='Y') / rag_count if rag_count else 0  # RAG accuracy
+    ft_acc = sum(1 for r in results if r['Method']=='Fine-Tuned' and r['Correct (Y/N)']=='Y') / ft_count if ft_count else 0  # Fine-Tuned accuracy
+    rag_time = sum(r['Time(s)'] for r in results if r['Method']=='RAG') / rag_count if rag_count else 0  # RAG avg time
+    ft_time = sum(r['Time(s)'] for r in results if r['Method']=='Fine-Tuned') / ft_count if ft_count else 0  # Fine-Tuned avg time
     logger.info(f'RAG Accuracy: {rag_acc}, Avg Time: {rag_time}')  # Log RAG stats
     logger.info(f'Fine-Tuned Accuracy: {ft_acc}, Avg Time: {ft_time}')  # Log Fine-Tuned stats
     st.markdown(f"**RAG Accuracy:** {rag_acc*100:.1f}% | **Avg Time:** {rag_time:.2f}s")  # Show RAG stats

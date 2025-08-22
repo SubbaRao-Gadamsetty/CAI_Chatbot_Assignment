@@ -157,7 +157,7 @@ def segment_sections(text: str) -> Dict[str, str]:
     # Detect and log all section headings in the cleaned text
     heading_pattern = r'(?m)^([A-Z][A-Za-z\'\-\s&]+):?$'
     headings = set(re.findall(heading_pattern, text))
-    logger.info(f"Detected section headings in document: {sorted(headings)}")
+    #logger.info(f"Detected section headings in document: {sorted(headings)}")
     logger.info(f"Segmented sections: {list(sections.keys())}")
     return sections
 

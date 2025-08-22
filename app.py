@@ -12,12 +12,19 @@ from modules.evaluation import run_evaluation, display_results_table
 st.set_page_config(page_title="Financial Chatbot Comparison", layout="wide")
 st.title("Financial Chatbot: RAG vs Fine-Tuned Model")
 
-# Load and preprocess financial statement PDFs
-with st.spinner("Loading and preprocessing financial statements..."):
-    docs, sections = load_and_preprocess_documents([
-        "data/NASDAQ_AMZN_2023.pdf",
-        "data/NASDAQ_AMZN_2024.pdf"
-    ])
+
+# Load and preprocess financial statement PDFs only once per session
+if "docs" not in st.session_state or "sections" not in st.session_state:
+    with st.spinner("Loading and preprocessing financial statements..."):
+        docs, sections = load_and_preprocess_documents([
+            "data/NASDAQ_AMZN_2023.pdf",
+            "data/NASDAQ_AMZN_2024.pdf"
+        ])
+        st.session_state["docs"] = docs
+        st.session_state["sections"] = sections
+else:
+    docs = st.session_state["docs"]
+    sections = st.session_state["sections"]
 
 # Initialize chatbots
 rag_bot = RAGChatbot(docs, sections)
