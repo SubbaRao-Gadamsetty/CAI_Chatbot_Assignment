@@ -162,14 +162,6 @@ class FineTunedChatbot:
             dataset.append({'prompt': prompt, 'response': response})  # Add to dataset
         logger.info(f'Prepared {len(dataset)} prompt/response pairs.')
         return dataset  # Return dataset
-        self.model_name = 'distilgpt2'
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-        from transformers import AutoModelForCausalLM
-        self.model = AutoModelForCausalLM.from_pretrained(self.model_name)
-        self.generator = pipeline('text-generation', model=self.model_name)
-        logger.info("FineTunedChatbot initialized.")
-
-    # Removed: prepare_qa_dataset (now using load_qa_pairs_from_json)
 
     def baseline_evaluation(self, questions: List[str]) -> List[Tuple[str, float, float]]:
         """
