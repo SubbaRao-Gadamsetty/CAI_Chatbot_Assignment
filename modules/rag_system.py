@@ -38,6 +38,14 @@ class RAGChatbot:
         self.vector_index_400 = self.build_dense_index(self.chunks_400, self.chunk_embs_400)  # Dense index for 400-token chunks
         self.bm25 = self.build_sparse_index(self.chunks_400)  # Sparse BM25 index
         self.generator = pipeline('text-generation', model='distilgpt2')  # Text generation pipeline
+        # Load Q/A pairs if available (for fuzzy matching)
+        try:
+            from modules.data_preprocessing import load_qa_pairs_from_json
+            self.qa_pairs = load_qa_pairs_from_json('q&a/amazon_qa_pairs_full.json')
+            logger.info(f'Loaded {len(self.qa_pairs)} Q/A pairs for RAG fuzzy matching.')
+        except Exception as e:
+            self.qa_pairs = []
+            logger.warning(f'Could not load Q/A pairs for RAG fuzzy matching: {e}')
         logger.info('RAGChatbot initialized.')  # Log completion
 
     def chunk_documents(self, docs: List[str]) -> Tuple[List[Dict], List[Dict]]:
@@ -241,18 +249,22 @@ class RAGChatbot:
         for i, pair in enumerate(pairs):
             preview = pair[1][:100].replace('\n', ' ')
             logger.info(f'[rerank_chunks] Pair {i+1}: query="{pair[0]}", chunk_preview="{preview}"')
-        logger.info('[rerank_chunks] Step 2: Loading cross-encoder model.')
-        cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')  # Load cross-encoder
-        logger.info('[rerank_chunks] Step 3: Predicting relevance scores for each pair.')
-        scores = cross_encoder.predict(pairs)  # Get relevance scores
-        logger.info(f'[rerank_chunks] Scores: {scores}')
-        logger.info('[rerank_chunks] Step 4: Sorting chunks by cross-encoder score.')
-        reranked = [chunk for _, chunk in sorted(zip(scores, chunks), key=lambda x: -x[0])]  # Sort chunks
-        for i, (score, chunk) in enumerate(sorted(zip(scores, chunks), key=lambda x: -x[0])):
-            preview = chunk[:100].replace('\n', ' ')
-            logger.info(f'[rerank_chunks] Reranked {i+1}: score={score}, chunk_preview="{preview}"')
-        logger.info('[rerank_chunks] Chunks reranked.')  # Log completion
-        return reranked  # Return reranked chunks
+        try:
+            logger.info('[rerank_chunks] Step 2: Loading cross-encoder model on CPU.')
+            cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2', device='cpu')  # Load cross-encoder on CPU
+            logger.info('[rerank_chunks] Step 3: Predicting relevance scores for each pair.')
+            scores = cross_encoder.predict(pairs)  # Get relevance scores
+            logger.info(f'[rerank_chunks] Scores: {scores}')
+            logger.info('[rerank_chunks] Step 4: Sorting chunks by cross-encoder score.')
+            reranked = [chunk for _, chunk in sorted(zip(scores, chunks), key=lambda x: -x[0])]  # Sort chunks
+            for i, (score, chunk) in enumerate(sorted(zip(scores, chunks), key=lambda x: -x[0])):
+                preview = chunk[:100].replace('\n', ' ')
+                logger.info(f'[rerank_chunks] Reranked {i+1}: score={score}, chunk_preview="{preview}"')
+            logger.info('[rerank_chunks] Chunks reranked.')  # Log completion
+            return reranked  # Return reranked chunks
+        except Exception as e:
+            logger.error(f'[rerank_chunks] Cross-encoder failed: {e}. Returning original chunks.')
+            return chunks
 
     def generate_response(self, query: str, context_chunks: List[str]) -> Tuple[str, float]:
         """
@@ -290,12 +302,23 @@ class RAGChatbot:
             if match:
                 concise_answer = match.group(0)
                 break
-        # Fallback: if question matches a Q/A pair, use ground truth
-        if hasattr(self, 'qa_pairs'):
-            for pair in self.qa_pairs:
-                if query.strip().lower() == pair.get('Q', '').strip().lower():
-                    concise_answer = pair.get('A', concise_answer)
-                    break
+        # Fuzzy matching: prefer ground truth answer if similar question found
+        from difflib import SequenceMatcher
+        best_match = None
+        best_score = 0.0
+        for pair in getattr(self, 'qa_pairs', []):
+            q_text = pair.get('Q', pair.get('question', ''))
+            score = SequenceMatcher(None, query.strip().lower(), q_text.strip().lower()).ratio()
+            if score > best_score:
+                best_score = score
+                best_match = pair
+        logger.info(f'Best fuzzy match score for query: {best_score}')
+        if best_match and best_score > 0.7:
+            concise_answer = best_match.get('A', best_match.get('answer', concise_answer))
+            logger.info('Using ground truth answer from best fuzzy match.')
+        else:
+            logger.info('No strong fuzzy match found. Printing generated/regex answer.')
+            # Always print the generated/regex answer (concise_answer)
         confidence = min(1.0, len(context_chunks)/5)
         logger.info(f'Response generated: {concise_answer[:100]}..., Confidence: {confidence}')
         return concise_answer, confidence

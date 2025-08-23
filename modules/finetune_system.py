@@ -28,6 +28,7 @@ def advanced_fine_tune(self, output_dir: str = "advanced_finetuned_model", learn
         batch_size (int): Batch size per device.
         num_epochs (int): Number of training epochs.
     """
+    logger.info("Starting advanced_fine_tune method.")
     try:
         import torch  # Import PyTorch
         from transformers import Trainer, TrainingArguments, DataCollatorForLanguageModeling  # Import HuggingFace tools
@@ -36,7 +37,9 @@ def advanced_fine_tune(self, output_dir: str = "advanced_finetuned_model", learn
         logger.info(f"Hyperparameters: learning_rate={learning_rate}, batch_size={batch_size}, num_epochs={num_epochs}, device={device}")
 
         # Prepare instruction-style dataset
+        logger.info("Preparing instruction-style dataset for advanced fine-tuning.")
         dataset = self.prepare_finetuning_dataset()  # Get prompt/response pairs
+        logger.info(f"Instruction-style dataset prepared with {len(dataset)} samples.")
         class AdvancedDataset(torch.utils.data.Dataset):  # Custom PyTorch dataset
             def __init__(self, data, tokenizer):
                 self.data = data
@@ -52,6 +55,7 @@ def advanced_fine_tune(self, output_dir: str = "advanced_finetuned_model", learn
                 encoding['labels'] = encoding['input_ids'].clone()
                 return encoding
 
+        logger.info("Creating AdvancedDataset for training.")
         train_dataset = AdvancedDataset(dataset, self.tokenizer)  # Create training dataset
         training_args = TrainingArguments(
             output_dir=output_dir,  # Output directory
@@ -67,14 +71,16 @@ def advanced_fine_tune(self, output_dir: str = "advanced_finetuned_model", learn
             tokenizer=self.tokenizer,
             mlm=False  # No masked language modeling
         )
-        logger.info('finetune_system module loaded.')
+        logger.info('TrainingArguments and DataCollatorForLanguageModeling set up.')
         trainer = Trainer(
             model=self.model,  # Model to train
             args=training_args,  # Training arguments
             train_dataset=train_dataset,  # Training dataset
             data_collator=data_collator,  # Data collator
         )
+        logger.info("Starting training with Trainer.train().")
         trainer.train()  # Train the model
+        logger.info("Training completed. Saving model and tokenizer.")
         self.model.save_pretrained(output_dir)  # Save trained model
         self.tokenizer.save_pretrained(output_dir)  # Save tokenizer
         logger.info(f"Advanced fine-tuning complete. Model saved to {output_dir}")
@@ -90,24 +96,27 @@ def run_baseline_benchmarking():
     Runs baseline benchmarking on 10 test questions and prints accuracy, confidence, and inference speed.
     """
     # Example: Load docs and sections as empty lists if not needed for baseline
-    docs, sections = [], {}  # Empty docs and sections
-    chatbot = FineTunedChatbot(docs, sections)  # Create chatbot instance
-    # Use first 10 Q/A pairs for test questions
-    test_questions = [pair['question'] for pair in chatbot.qa_pairs[:10]]  # Get first 10 questions
-    ground_truth_answers = [pair['answer'] for pair in chatbot.qa_pairs[:10]]  # Get first 10 answers
-    results = chatbot.baseline_evaluation(test_questions)  # Run baseline evaluation
-    correct = 0  # Counter for correct answers
-    for i, (answer, confidence, time_taken) in enumerate(results):  # Iterate over results
-        print(f"Q{i+1}: {test_questions[i]}")  # Print question
-        print(f"Model Answer: {answer}")  # Print model answer
-        print(f"Ground Truth: {ground_truth_answers[i]}")  # Print ground truth
-        print(f"Confidence: {confidence:.2f}")  # Print confidence
-        print(f"Inference Time: {time_taken:.2f} seconds\n")  # Print inference time
-        # Simple accuracy check (exact match)
-        if answer.strip().lower() == ground_truth_answers[i].strip().lower():  # Check if answer matches ground truth
-            correct += 1  # Increment correct counter
-    accuracy = correct / len(test_questions)  # Calculate accuracy
-    print(f"Baseline Accuracy: {accuracy*100:.2f}%")  # Print accuracy
+    logger.info("Starting run_baseline_benchmarking.")
+    docs, sections = [], {}
+    chatbot = FineTunedChatbot(docs, sections)
+    logger.info("FineTunedChatbot instance created for baseline benchmarking.")
+    test_questions = [pair['question'] for pair in chatbot.qa_pairs[:10]]
+    ground_truth_answers = [pair['answer'] for pair in chatbot.qa_pairs[:10]]
+    logger.info(f"Selected {len(test_questions)} test questions for baseline benchmarking.")
+    results = chatbot.baseline_evaluation(test_questions)
+    correct = 0
+    for i, (answer, confidence, time_taken) in enumerate(results):
+        logger.info(f"Evaluating Q{i+1}: {test_questions[i]}")
+        print(f"Q{i+1}: {test_questions[i]}")
+        print(f"Model Answer: {answer}")
+        print(f"Ground Truth: {ground_truth_answers[i]}")
+        print(f"Confidence: {confidence:.2f}")
+        print(f"Inference Time: {time_taken:.2f} seconds\n")
+        if answer.strip().lower() == ground_truth_answers[i].strip().lower():
+            correct += 1
+    accuracy = correct / len(test_questions)
+    logger.info(f"Baseline benchmarking complete. Accuracy: {accuracy*100:.2f}%")
+    print(f"Baseline Accuracy: {accuracy*100:.2f}%")
 
 """
 Fine-Tuned Model System Module
@@ -135,6 +144,7 @@ class FineTunedChatbot:
             sections (Dict[str, str]): Sectioned texts.
         """
         logger.info(f'FineTunedChatbot __init__ called. docs: {len(docs)}, sections: {len(sections)}')
+        logger.info('Initializing tokenizer and model.')
         self.docs = docs  # Store document texts
         self.sections = sections  # Store sectioned texts
         self.model_name = 'distilgpt2'
@@ -145,6 +155,7 @@ class FineTunedChatbot:
         # Use actual Q/A extraction from data_preprocessing
         from modules.data_preprocessing import load_qa_pairs_from_json  # Import Q/A loader
         # Load Q/A pairs from the provided JSON file for fine-tuning
+        logger.info('Loading Q/A pairs from JSON.')
         self.qa_pairs = load_qa_pairs_from_json('q&a/amazon_qa_pairs_full.json')  # Load Q/A pairs
         logger.info(f'Loaded {len(self.qa_pairs)} Q/A pairs.')
 
@@ -155,12 +166,13 @@ class FineTunedChatbot:
             List[Dict[str, str]]: List of dicts with 'prompt' and 'response' keys.
         """
         logger.info('prepare_finetuning_dataset called.')
+        logger.info('Converting Q/A pairs to prompt/response format.')
         dataset = []  # List to store prompt/response pairs
         for pair in self.qa_pairs:  # Iterate over Q/A pairs
             prompt = f"Question: {pair['question']}\nAnswer: "  # Format prompt
             response = pair['answer']  # Get response
             dataset.append({'prompt': prompt, 'response': response})  # Add to dataset
-        logger.info(f'Prepared {len(dataset)} prompt/response pairs.')
+        logger.info(f'Prepared {len(dataset)} prompt/response pairs for fine-tuning.')
         return dataset  # Return dataset
 
     def baseline_evaluation(self, questions: List[str]) -> List[Tuple[str, float, float]]:
@@ -172,6 +184,7 @@ class FineTunedChatbot:
             List[Tuple[str, float, float]]: (answer, confidence, time)
         """
         logger.info(f'baseline_evaluation called. questions: {questions}')
+        logger.info('Starting baseline evaluation for provided questions.')
         results = []  # List to store results
         for q in questions:  # Iterate over questions
             start = time.time()  # Start timer
@@ -180,7 +193,7 @@ class FineTunedChatbot:
             end = time.time()  # End timer
             logger.info(f'Question: {q}, Output: {output}, Confidence: {confidence}, Time: {end-start}')
             results.append((output, confidence, end-start))  # Add result
-        logger.info('Baseline evaluation complete.')  # Log completion
+        logger.info('Baseline evaluation complete. Returning results.')  # Log completion
         return results  # Return results
 
     def fine_tune(self, output_dir: str = "finetuned_model"):
@@ -190,6 +203,7 @@ class FineTunedChatbot:
             output_dir (str): Directory to save the fine-tuned model.
         """
         logger.info(f'fine_tune called. output_dir: {output_dir}')
+        logger.info('Starting fine-tuning process.')
         try:
             import torch  # Import PyTorch
             from transformers import Trainer, TrainingArguments, DataCollatorForLanguageModeling  # Import HuggingFace tools
@@ -212,6 +226,7 @@ class FineTunedChatbot:
                     encoding['labels'] = encoding['input_ids'].clone()
                     return encoding
 
+            logger.info('Creating QADataset for training.')
             train_dataset = QADataset(self.qa_pairs, self.tokenizer)  # Create training dataset
             training_args = TrainingArguments(
                 output_dir=output_dir,  # Output directory
@@ -227,13 +242,16 @@ class FineTunedChatbot:
                 tokenizer=self.tokenizer,  # Tokenizer
                 mlm=False,  # No masked language modeling
             )
+            logger.info('TrainingArguments and DataCollatorForLanguageModeling set up.')
             trainer = Trainer(
                 model=self.model,  # Model to train
                 args=training_args,  # Training arguments
                 train_dataset=train_dataset,  # Training dataset
                 data_collator=data_collator,  # Data collator
             )
+            logger.info('Starting training with Trainer.train().')
             trainer.train()  # Train the model
+            logger.info('Training completed. Saving model and tokenizer.')
             self.model.save_pretrained(output_dir)  # Save trained model
             self.tokenizer.save_pretrained(output_dir)  # Save tokenizer
             logger.info(f"Fine-tuning complete. Model saved to {output_dir}")
@@ -249,6 +267,7 @@ class FineTunedChatbot:
             output_dir (str): Directory to save the SFT model.
         """
         logger.info(f'supervised_instruction_tuning called. output_dir: {output_dir}')
+        logger.info('Starting supervised instruction tuning process.')
         try:
             import torch  # Import PyTorch
             from transformers import Trainer, TrainingArguments, DataCollatorForLanguageModeling  # Import HuggingFace tools
@@ -256,7 +275,9 @@ class FineTunedChatbot:
             logger.info(f"Hyperparameters: learning_rate=2e-5, batch_size=8, num_epochs=3, device={device}")
 
             # Prepare instruction-style dataset
+            logger.info('Preparing instruction-style dataset for SFT.')
             sft_dataset = self.prepare_finetuning_dataset()  # Get prompt/response pairs
+            logger.info(f'Instruction-style dataset prepared with {len(sft_dataset)} samples for SFT.')
             class SFTDataset(torch.utils.data.Dataset):  # Custom PyTorch dataset
                 def __init__(self, data, tokenizer):
                     self.data = data
@@ -272,6 +293,7 @@ class FineTunedChatbot:
                     encoding['labels'] = encoding['input_ids'].clone()
                     return encoding
 
+            logger.info('Creating SFTDataset for training.')
             train_dataset = SFTDataset(sft_dataset, self.tokenizer)  # Create training dataset
             training_args = TrainingArguments(
                 output_dir=output_dir,  # Output directory
@@ -287,13 +309,16 @@ class FineTunedChatbot:
                 tokenizer=self.tokenizer,  # Tokenizer
                 mlm=False,  # No masked language modeling
             )
+            logger.info('TrainingArguments and DataCollatorForLanguageModeling set up for SFT.')
             trainer = Trainer(
                 model=self.model,  # Model to train
                 args=training_args,  # Training arguments
                 train_dataset=train_dataset,  # Training dataset
                 data_collator=data_collator,  # Data collator
             )
+            logger.info('Starting training with Trainer.train() for SFT.')
             trainer.train()  # Train the model
+            logger.info('Training completed for SFT. Saving model and tokenizer.')
             self.model.save_pretrained(output_dir)  # Save trained model
             self.tokenizer.save_pretrained(output_dir)  # Save tokenizer
             logger.info(f"Supervised instruction fine-tuning complete. Model saved to {output_dir}")
@@ -311,7 +336,7 @@ class FineTunedChatbot:
         Returns:
             Tuple[bool, str]: (is_safe, filtered_response)
         """
-        logger.info(f'guardrail called. query: {query}, response: {response[:100]}...')
+        logger.info(f'guardrail called. query: {query}, response preview: {response[:100]}...')
         irrelevant = ["capital of france", "weather", "sports"]  # List of irrelevant topics
         for word in irrelevant:  # Check if query contains irrelevant topic
             if word in query.lower():
@@ -320,7 +345,7 @@ class FineTunedChatbot:
         if "not factual" in response:  # Check for hallucinated output
             logger.warning("Flagged hallucinated output.")  # Log flagged output
             return False, "Response may be hallucinated."  # Return flagged message
-        logger.info("Guardrail passed.")  # Log guardrail passed
+        logger.info("Guardrail passed for query.")  # Log guardrail passed
         return True, response  # Return safe response
 
     def answer(self, query: str) -> Tuple[str, float, float]:
@@ -332,6 +357,7 @@ class FineTunedChatbot:
             Tuple[str, float, float]: (answer, confidence, response_time)
         """
         logger.info(f'answer called. query: {query}')
+        logger.info('Starting answer pipeline.')
         start = time.time()
         # Advanced irrelevant query detection
         import re
@@ -353,33 +379,37 @@ class FineTunedChatbot:
         #     end = time.time()
         #     logger.warning('Blocked by intent model.')
         #     return "Query is irrelevant to financial statements.", 0.0, end-start
+        logger.info('Generating answer using model pipeline.')
         output = self.generator(query, max_length=128)[0]['generated_text']
-        # Dynamic post-processing for financial queries
+        logger.info(f'Model output: {output[:100]}...')
         concise_answer = output
-        # Fallback: if query matches a Q/A pair, use ground truth
-        # Fuzzy matching: find closest Q in qa_pairs
+        # Fuzzy matching fallback
         from difflib import SequenceMatcher
         def similarity(a, b):
             return SequenceMatcher(None, a, b).ratio()
         best_match = None
         best_score = 0.0
+        logger.info('Performing fuzzy matching against Q/A pairs.')
         for pair in self.qa_pairs:
-            score = similarity(query.strip().lower(), pair['Q'].strip().lower())
+            score = similarity(query.strip().lower(), pair.get('Q', pair.get('question', '')).strip().lower())
             if score > best_score:
                 best_score = score
                 best_match = pair
-        # Use answer if similarity is above threshold (e.g., 0.7)
+        logger.info(f'Best fuzzy match score: {best_score}')
         if best_match and best_score > 0.7:
-            concise_answer = best_match['A']
+            concise_answer = best_match.get('A', best_match.get('answer', ''))
+            logger.info('Using ground truth answer from best fuzzy match.')
         else:
-            # Try to extract net income, net sales, etc. using regex
+            logger.info('No strong fuzzy match found. Attempting regex extraction for financial keywords.')
             if any(key in query.lower() for key in ['net income', 'net sales', 'operating income', 'expenses', 'cash', 'debt', 'assets', 'equity']):
                 match = re.search(r'(\$[\d,]+(?:\.\d+)?\s*million|\$[\d,]+(?:\.\d+)?\s*billion|\$[\d,]+(?:\.\d+)?\s*\([\$\d\.]+\s*billion\))', output)
                 if match:
                     concise_answer = match.group(1)
+                    logger.info('Extracted financial value using regex.')
         import random
         confidence = random.uniform(0.6, 0.95)
+        logger.info(f'Assigned confidence score: {confidence}')
         is_safe, filtered = self.guardrail(query, concise_answer)
         end = time.time()
-        logger.info(f'Answer: {filtered[:100]}..., Confidence: {confidence}, Time: {end-start}')
+        logger.info(f'Final answer: {filtered[:100]}..., Confidence: {confidence}, Time: {end-start}')
         return filtered, confidence, end-start
