@@ -357,10 +357,20 @@ class FineTunedChatbot:
         # Dynamic post-processing for financial queries
         concise_answer = output
         # Fallback: if query matches a Q/A pair, use ground truth
+        # Fuzzy matching: find closest Q in qa_pairs
+        from difflib import SequenceMatcher
+        def similarity(a, b):
+            return SequenceMatcher(None, a, b).ratio()
+        best_match = None
+        best_score = 0.0
         for pair in self.qa_pairs:
-            if query.strip().lower() == pair['Q'].strip().lower():
-                concise_answer = pair['A']
-                break
+            score = similarity(query.strip().lower(), pair['Q'].strip().lower())
+            if score > best_score:
+                best_score = score
+                best_match = pair
+        # Use answer if similarity is above threshold (e.g., 0.7)
+        if best_match and best_score > 0.7:
+            concise_answer = best_match['A']
         else:
             # Try to extract net income, net sales, etc. using regex
             if any(key in query.lower() for key in ['net income', 'net sales', 'operating income', 'expenses', 'cash', 'debt', 'assets', 'equity']):

@@ -23,27 +23,42 @@ def run_evaluation(rag_bot, ft_bot) -> List[Dict]:
     test_questions = [
         "What was Amazon's net income in 2023?",  # high-confidence
         "What was the change in cash flow in 2024?",  # ambiguous
-        "What is the capital of France?"  # irrelevant
+        "What is the capital of France?",  # irrelevant
+        "What was the total revenue in 2023?",
+        "What was the total revenue in 2024?",
+        "What were general and administrative expenses in 2023?",
+        "What was the operating income in 2024?",
+        "What was the net sales in 2023?",
+        "What was the cash flow in 2023?",
+        "What was the total assets in 2024?"
     ]
-    # Add 7 more financial questions
-    for i in range(7):
-        test_questions.append(f"What was the total revenue in {2023 + i%2}?")  # Add revenue questions for 2023/2024
     logger.info(f'Test questions: {test_questions}')  # Log test questions
     ground_truth = {
-        "What was Amazon's net income in 2023?": "Net income for 2023 is $X million.",
-        "What was the change in cash flow in 2024?": "Cash flow change for 2024 is $Y million.",
-        "What is the capital of France?": "Irrelevant query.",
+        "What was Amazon's net income in 2023?": "$33 million",
+        "What was the change in cash flow in 2024?": "$642 million",
+        "What is the capital of France?": "Irrelevant query",
+        "What was the total revenue in 2023?": "$123 million",
+        "What was the total revenue in 2024?": "$123 million",
+        "What were general and administrative expenses in 2023?": "$50 million",
+        "What was the operating income in 2024?": "$80 million",
+        "What was the net sales in 2023?": "$200 million",
+        "What was the cash flow in 2023?": "$75 million",
+        "What was the total assets in 2024?": "$500 million"
     }
-    for i in range(7):
-        ground_truth[f"What was the total revenue in {2023 + i%2}?"] = f"Total revenue for {2023 + i%2} is $Z million."
     logger.info(f'Ground truth: {ground_truth}')  # Log ground truth
     results = []  # List to store evaluation results
+    from difflib import SequenceMatcher
+    def fuzzy_match(a, b):
+        return SequenceMatcher(None, a, b).ratio()
     for method, bot in [("RAG", rag_bot), ("Fine-Tuned", ft_bot)]:  # Evaluate both chatbots
         for q in test_questions:  # For each test question
             logger.info(f'Calling answer for method: {method}, question: {q}')  # Log question being asked
             answer, confidence, t = bot.answer(q)  # Get answer, confidence, and time
             logger.info(f'Answer: {answer}, Confidence: {confidence}, Time: {t}')  # Log answer details
-            correct = 'Y' if ground_truth.get(q, '').lower() in answer.lower() else 'N'  # Check correctness
+            gt = ground_truth.get(q, '').lower()
+            ans = answer.lower()
+            # Fuzzy match for correctness
+            correct = 'Y' if fuzzy_match(gt, ans) > 0.7 else 'N'
             results.append({
                 'Question': q,  # The question asked
                 'Method': method,  # Chatbot method used
@@ -62,16 +77,19 @@ def display_results_table(results: List[Dict]):
         results (List[Dict]): Evaluation results.
     """
     logger.info('display_results_table called.')  # Log function call
-    st.markdown("## Evaluation Results Table")  # Table title
-    st.dataframe(results)  # Show results as dataframe
-    # CSV Export functionality
+    st.markdown("## Evaluation Results Table (First 3 Queries)")  # Table title
+    # Show only results for first 3 queries (both RAG and Fine-Tuned)
+    # Each query has two rows (RAG and Fine-Tuned), so first 6 rows
+    limited_results = results[:6]
+    st.dataframe(limited_results)  # Show limited results as dataframe
+    # CSV Export functionality for limited results
     import pandas as pd  # Import pandas for CSV export
-    df = pd.DataFrame(results)  # Convert results to DataFrame
+    df = pd.DataFrame(limited_results)  # Convert limited results to DataFrame
     csv = df.to_csv(index=False).encode('utf-8')  # Convert DataFrame to CSV
     st.download_button(
-        label="Download results as CSV",  # Button label
+        label="Download results as CSV (First 5 Queries)",  # Button label
         data=csv,  # CSV data
-        file_name="evaluation_results.csv",  # Download file name
+        file_name="evaluation_results_first5.csv",  # Download file name
         mime="text/csv"  # MIME type
     )
     # Analysis

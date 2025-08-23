@@ -4,16 +4,26 @@ Launches Streamlit UI to compare RAG and Fine-Tuned chatbot systems.
 """
 import os
 import streamlit as st
+import time
+# Ensure deployment_done is initialized before any usage
+if "deployment_done" not in st.session_state:
+    st.session_state["deployment_done"] = False
 from modules.data_preprocessing import load_and_preprocess_documents
 from modules.rag_system import RAGChatbot
 from modules.finetune_system import FineTunedChatbot
 from modules.evaluation import run_evaluation, display_results_table
-
 st.set_page_config(page_title="Financial Chatbot Comparison", layout="wide")
 st.title("Financial Chatbot: RAG vs Fine-Tuned Model")
 
 
-# Load and preprocess financial statement PDFs only once per session
+# Initialize deployment_done before any usage
+# if "deployment_done" not in st.session_state:
+#     st.session_state["deployment_done"] = False
+
+# if not st.session_state["deployment_done"]:
+#     st.info("Deployment process is in progress and it will take some time...")
+#     time.sleep(2)
+
 if "docs" not in st.session_state or "sections" not in st.session_state:
     with st.spinner("Loading and preprocessing financial statements..."):
         docs, sections = load_and_preprocess_documents([
@@ -26,9 +36,20 @@ else:
     docs = st.session_state["docs"]
     sections = st.session_state["sections"]
 
-# Initialize chatbots
-rag_bot = RAGChatbot(docs, sections)
-ft_bot = FineTunedChatbot(docs, sections)
+# Initialize RAGChatbot only once and store in session_state
+if "rag_bot" not in st.session_state:
+    with st.spinner("Initializing RAG system and building indexes (one-time)..."):
+        st.session_state["rag_bot"] = RAGChatbot(docs, sections)
+rag_bot = st.session_state["rag_bot"]
+
+# Initialize FineTunedChatbot only once and store in session_state
+if "ft_bot" not in st.session_state:
+    st.session_state["ft_bot"] = FineTunedChatbot(docs, sections)
+ft_bot = st.session_state["ft_bot"]
+
+# Mark deployment as done after both bots are initialized
+if not st.session_state["deployment_done"]:
+    st.session_state["deployment_done"] = True
 
 # Sidebar radio button for selecting chatbot method
 method = st.sidebar.radio("Select Chatbot Method", ["RAG", "Fine-Tuned Model"])
@@ -50,5 +71,11 @@ if query:
 
 # Button to run evaluation and comparison of both chatbots
 if st.button("Run Evaluation & Comparison"):
-    results = run_evaluation(rag_bot, ft_bot)
-    display_results_table(results)
+    try:
+        results = run_evaluation(rag_bot, ft_bot)
+        if results:
+            display_results_table(results)
+        else:
+            st.warning("No evaluation results to display.")
+    except Exception as e:
+        st.error(f"Error during evaluation: {e}")

@@ -31,8 +31,11 @@ class RAGChatbot:
         self.sections = sections  # Store sectioned texts
         self.chunks_100, self.chunks_400 = self.chunk_documents(docs)  # Chunk documents
         self.model = SentenceTransformer('intfloat/e5-small-v2')  # Embedding model
-        self.vector_index_100 = self.build_dense_index(self.chunks_100)  # Dense index for 100-token chunks
-        self.vector_index_400 = self.build_dense_index(self.chunks_400)  # Dense index for 400-token chunks
+        # Precompute embeddings for chunks and store them
+        self.chunk_embs_100 = self.model.encode([c['text'] for c in self.chunks_100], batch_size=32, show_progress_bar=True)
+        self.chunk_embs_400 = self.model.encode([c['text'] for c in self.chunks_400], batch_size=32, show_progress_bar=True)
+        self.vector_index_100 = self.build_dense_index(self.chunks_100, self.chunk_embs_100)  # Dense index for 100-token chunks
+        self.vector_index_400 = self.build_dense_index(self.chunks_400, self.chunk_embs_400)  # Dense index for 400-token chunks
         self.bm25 = self.build_sparse_index(self.chunks_400)  # Sparse BM25 index
         self.generator = pipeline('text-generation', model='distilgpt2')  # Text generation pipeline
         logger.info('RAGChatbot initialized.')  # Log completion
@@ -81,12 +84,12 @@ class RAGChatbot:
             logger.info(f"100-token chunk {i+1}: id={chunk['id']}, meta={chunk['meta']}, preview={preview}")
         logger.info('--- Chunking Preview: First 5 Chunks (400 tokens) ---')
         for i, chunk in enumerate(chunks_400[:5]):
-            preview = chunk['text'][:100].replace('\n', ' ')
+            preview = chunk['text'][:400].replace('\n', ' ')
             logger.info(f"400-token chunk {i+1}: id={chunk['id']}, meta={chunk['meta']}, preview={preview}")
         logger.info(f'Chunked into {len(chunks_100)} (100 tokens) and {len(chunks_400)} (400 tokens) chunks.')  # Log chunk counts
         return chunks_100, chunks_400  # Return chunk lists
 
-    def build_dense_index(self, chunks: List[Dict]):
+    def build_dense_index(self, chunks: List[Dict], embeddings=None):
         """
         Builds FAISS dense vector index for chunks.
         Args:
@@ -99,9 +102,9 @@ class RAGChatbot:
             logger.warning('No chunks to index.')
             return None  # Return None
 
-        texts = [c['text'] for c in chunks]  # Get chunk texts
-        # Use model's native batch encoding for speed
-        embeddings = self.model.encode(texts, batch_size=32, show_progress_bar=True)
+        if embeddings is None:
+            texts = [c['text'] for c in chunks]
+            embeddings = self.model.encode(texts, batch_size=32, show_progress_bar=True)
         embeddings = np.array(embeddings)
         index = faiss.IndexFlatL2(embeddings.shape[1])  # Create FAISS index
         index.add(np.array(embeddings))  # Add embeddings to index
@@ -109,7 +112,7 @@ class RAGChatbot:
         logger.info('--- Dense Index Preview: First 5 Chunks and Embeddings ---')
         for i in range(min(5, len(chunks))):
             chunk_id = chunks[i].get('id', f'chunk_{i}')
-            preview = texts[i][:100].replace('\n', ' ')
+            preview = chunks[i]['text'][:100].replace('\n', ' ')
             emb_preview = embeddings[i][:5] if embeddings.shape[1] >= 5 else embeddings[i]
             logger.info(f"Index {i+1}: id={chunk_id}, text_preview={preview}, embedding_preview={emb_preview}")
         logger.info('Dense index built.')  # Log completion
@@ -180,11 +183,9 @@ class RAGChatbot:
         # Dense retrieval: semantic similarity
         logger.info('[hybrid_retrieve] Step 1: Encoding query for dense retrieval.')
         query_emb = self.model.encode([query])  # Encode query
-        chunk_texts = [c['text'] for c in self.chunks_400]  # Get chunk texts
-        logger.info(f'[hybrid_retrieve] Step 2: Encoding {len(chunk_texts)} chunks for dense retrieval.')
-        chunk_embs = self.model.encode(chunk_texts)  # Encode chunks
-        logger.info('[hybrid_retrieve] Step 3: Calculating dense (semantic) similarity scores.')
-        dense_scores = cosine_similarity(query_emb, chunk_embs)[0]  # Compute dense scores
+        # Use precomputed chunk embeddings for dense retrieval
+        logger.info(f'[hybrid_retrieve] Step 2: Using precomputed embeddings for {len(self.chunk_embs_400)} chunks.')
+        dense_scores = cosine_similarity(query_emb, self.chunk_embs_400)[0]  # Compute dense scores
         logger.info(f'[hybrid_retrieve] Dense scores calculated. Example scores: {dense_scores[:5]}')
 
         # Sparse retrieval: keyword relevance
@@ -215,7 +216,7 @@ class RAGChatbot:
         logger.info(f'[hybrid_retrieve] Top indices: {top_indices}')
         retrieved = [self.chunks_400[i]['text'] for i in top_indices]  # Get top chunks
         for idx, i in enumerate(top_indices):
-            preview = self.chunks_400[i]['text'][:100].replace('\n', ' ')
+            preview = self.chunks_400[i]['text'][:400].replace('\n', ' ')
             logger.info(f'[hybrid_retrieve] Top chunk {idx+1}: index={i}, preview={preview}')
         logger.info(f'[hybrid_retrieve] Retrieved {len(retrieved)} chunks.')  # Log retrieval
         return retrieved  # Return retrieved chunks
